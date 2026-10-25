@@ -1,0 +1,7 @@
+# Optional: copy to terraform.tfvars to override defaults.
+# Contains no secrets.
+project_name  = "payment-engine"
+environment   = "dev"
+app_version   = "1.0.0"
+host_address  = "localhost"
+k8s_namespace = "payment-engine"
