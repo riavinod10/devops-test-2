@@ -9,7 +9,7 @@ param(
     [int]$DockerBackendPort = 5000,
     [int]$DockerFrontendPort = 8081,
     [int]$BackendNodePort = 30500,
-    [int]$FrontendNodePort = 30080
+    [int]$FrontendNodePort = 31080
 )
 
 $script:failures = 0

@@ -64,7 +64,7 @@ variable "backend_nodeport" {
 variable "frontend_nodeport" {
   description = "Frontend NodePort (must match k8s/20-frontend.yaml)."
   type        = number
-  default     = 30080
+  default     = 31080
 
   validation {
     condition     = var.frontend_nodeport >= 30000 && var.frontend_nodeport <= 32767

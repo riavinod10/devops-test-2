@@ -15,7 +15,7 @@ devops-test-c/
 │   ├── Dockerfile
 │   ├── nginx/default.conf.template
 │   └── public/ index.html  app.js  styles.css
-├── k8s/                     00-namespace, 10-backend (ConfigMap+Deployment+NodePort 30500), 20-frontend (Deployment+NodePort 30080)
+├── k8s/                     00-namespace, 10-backend (ConfigMap+Deployment+NodePort 30500), 20-frontend (Deployment+NodePort 31080)
 ├── Jenkinsfile              Declarative pipeline: Preflight → Build → Test → Package Containers → Smoke Test
 ├── jenkins/Dockerfile       OPTIONAL Jenkins image with Docker CLI
 ├── terraform/               local provider → writes ansible/generated/{inventory.ini,connection.json,app.env}
@@ -30,7 +30,7 @@ devops-test-c/
 | Component | Docker (task 4) | Kubernetes (task 5) |
 |---|---|---|
 | Backend `payment-backend:1.0.0` | `localhost:5000` | Service `payment-backend:5000`, NodePort **30500** |
-| Frontend `payment-frontend:1.0.0` | `localhost:8081` (8080 = Jenkins) | Service `payment-frontend:80`, NodePort **30080** |
+| Frontend `payment-frontend:1.0.0` | `localhost:8081` (8080 = Jenkins) | Service `payment-frontend:80`, NodePort **31080** |
 
 The frontend reaches the backend by the name `payment-backend` — the container
 name on Docker network `payments-net` and the Service name in namespace
@@ -150,19 +150,30 @@ kubectl rollout status deployment/payment-frontend -n payment-engine --timeout=1
 kubectl get deploy,pods,svc -n payment-engine -o wide
 
 Invoke-RestMethod http://localhost:30500/health
-Invoke-RestMethod http://localhost:30080/backend-health
+Invoke-RestMethod http://localhost:31080/backend-health
 
 powershell -ExecutionPolicy Bypass -File .\scripts\verify-stack.ps1
 ```
 
 Success: 1/1 backend and 2/2 frontend pods `Running`/`Ready`; services `NodePort`
-`5000:30500/TCP` and `80:30080/TCP`; script ends with `ALL CHECKS PASSED`.
-Dashboard: http://localhost:30080
+`5000:30500/TCP` and `80:31080/TCP`; script ends with `ALL CHECKS PASSED`.
+Dashboard: http://localhost:31080
 
-If pods show `ErrImagePull`/`ImagePullBackOff`: your Docker Desktop cluster
-doesn't share the local image store (the "kind" cluster type). Switch Kubernetes
-to the kubeadm cluster in Docker Desktop settings, or send me the
-`kubectl describe pod` output.
+Troubleshooting:
+
+- `provided port is already allocated` on a Service: another Service in the
+  cluster already uses that NodePort. Find it with
+  `kubectl get svc -A -o wide | Select-String "<port>"`.
+- Pods `Running` but `localhost:<NodePort>` refuses connections: Docker Desktop
+  is running the **kind** cluster type (node name `desktop-control-plane`),
+  which does not forward NodePorts to Windows `localhost`. Use the **kubeadm**
+  cluster type (Docker Desktop → Settings → Kubernetes), then re-run this block.
+  To prove the NodePort works on the kind node itself:
+  `kubectl run np-test -n payment-engine --rm -i --restart=Never --image=curlimages/curl -- curl -s -m 5 http://<node-INTERNAL-IP>:30500/health`
+  (node IP from `kubectl get nodes -o wide`).
+- Pods `ErrImagePull`/`ImagePullBackOff`: the cluster can't see locally built
+  images. Enable Docker Desktop → Settings → General → "Use containerd for
+  pulling and storing images", rebuild the images (step 4), and re-apply.
 
 ## 3. Jenkins — Declarative Pipeline
 
@@ -275,7 +286,7 @@ The endpoint probe is a soft check: `HTTP 200` if WSL can reach Windows
 | 2 | Sprint complete, all Done, burndown reviewed | `jira/sprint-backlog.csv` + section 2 | Jira Burndown / Sprint Report |
 | 3 | Declarative pipeline: build, test, package | `Jenkinsfile` | Jenkins Stage View + Test Result |
 | 4 | Build, tag, run image, verified by `docker ps` | `backend/Dockerfile`, `frontend/Dockerfile`, section 4 | `docker ps --filter name=payment-` |
-| 5 | Frontend + Backend on K8s via NodePort | `k8s/*.yaml` | `kubectl get svc -n payment-engine`, http://localhost:30080 |
+| 5 | Frontend + Backend on K8s via NodePort | `k8s/*.yaml` | `kubectl get svc -n payment-engine`, http://localhost:31080 |
 | 6 | Terraform generates connection files; Ansible validates hosts | `terraform/`, `ansible/playbooks/validate-hosts.yml` | `terraform output`, PLAY RECAP `failed=0` |
 
 ## Cleanup (optional)
