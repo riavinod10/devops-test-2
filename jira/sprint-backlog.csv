@@ -4,5 +4,5 @@ Summary,Issue Type,Priority,Story Points,Labels,Description
 "PAY-Frontend: Dashboard with backend reverse proxy",Story,Medium,3,frontend,"nginx dashboard; /api proxied to payment-backend service."
 "PAY-Jenkins: Declarative pipeline build/test/package",Task,High,3,jenkins,"Pipeline from SCM: Build, Test (JUnit), Package Containers, Smoke Test all green."
 "PAY-Docker: Build, tag and run images",Task,Medium,2,docker,"payment-backend:1.0.0 and payment-frontend:1.0.0 running; verified with docker ps."
-"PAY-K8s: Deploy frontend + backend with NodePort",Task,High,3,kubernetes,"Namespace payment-engine; pods Ready; frontend NodePort 30080, backend NodePort 30500."
+"PAY-K8s: Deploy frontend + backend with NodePort",Task,High,3,kubernetes,"Namespace payment-engine; pods Ready; frontend NodePort 31080, backend NodePort 30500."
 "PAY-IaC: Terraform connection files + Ansible validation",Task,Medium,3,"terraform ansible","terraform apply generates inventory/connection files; ansible-playbook validation passes."
